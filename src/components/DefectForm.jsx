@@ -1,9 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
+import {
+  clientOptions,
+  getLinesByClient,
+  getSupervisorsByLine,
+  normalizeSuperviseurValue,
+} from "../constants/lineConfig";
 
 const initialForm = {
   form_type: "",
   is_nidec: false,
+  monday_group: "",
   defaut: "",
   date_detection: "",
   ligne: "",
@@ -19,7 +26,7 @@ const initialForm = {
   saisie_quantite_totale: false,
 };
 
-export default function DefectForm({ config }) {
+export default function DefectForm({ config, onRefresh }) {
   const [form, setForm] = useState({
     ...initialForm,
     form_type: config.form_type,
@@ -37,6 +44,22 @@ export default function DefectForm({ config }) {
   const [defauts, setDefauts] = useState([]);
   const [csl1, setCsl1] = useState([]);
   const [cf, setCf] = useState([]);
+  const clientSelectOptions = useMemo(() => {
+    return Array.from(new Set([...(staticOptions.bu || []), ...clientOptions]));
+  }, [staticOptions.bu]);
+
+  const ligneOptions = useMemo(() => {
+    if (!form.bu) {
+      return staticOptions.ligne;
+    }
+
+    const mappedLines = getLinesByClient(form.bu);
+    return mappedLines.length ? mappedLines : staticOptions.ligne;
+  }, [form.bu, staticOptions.ligne]);
+
+  const superviseurOptions = useMemo(() => {
+    return getSupervisorsByLine(form.ligne);
+  }, [form.ligne]);
 
   useEffect(() => {
     async function loadLookups() {
@@ -51,6 +74,7 @@ export default function DefectForm({ config }) {
       setDefauts(defautsRes.data);
       setCsl1(csl1Res.data);
       setCf(cfRes.data);
+
     }
 
     loadLookups();
@@ -64,10 +88,27 @@ export default function DefectForm({ config }) {
     const { name, value, type, checked } = e.target;
     const finalValue = type === "checkbox" ? checked : value;
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: finalValue,
-    }));
+    setForm((prev) => {
+      const next = {
+        ...prev,
+        [name]: finalValue,
+      };
+
+      if (name === "bu") {
+        if (prev.ligne && !getLinesByClient(finalValue).includes(prev.ligne)) {
+          next.ligne = "";
+        }
+        if (prev.equipe) {
+          next.equipe = "";
+        }
+      }
+
+      if (name === "ligne" && prev.equipe) {
+        next.equipe = "";
+      }
+
+      return next;
+    });
   }
 
   function handleCSL1Change(e) {
@@ -92,11 +133,12 @@ export default function DefectForm({ config }) {
     }));
   }
 
-  async function handleSubmit(e) {
+async function handleSubmit(e) {
     e.preventDefault();
 
     const payload = {
       ...form,
+      monday_group: form.monday_group || null,
       date_detection: form.date_detection || null,
       nombre: Number(form.nombre || 0),
       quantite_controlee: form.quantite_controlee
@@ -104,16 +146,22 @@ export default function DefectForm({ config }) {
         : null,
     };
 
-    await api.post("/defects", payload);
-
-    alert("Enregistré avec succès");
-
-    setForm({
-      ...initialForm,
-      form_type: config.form_type,
-      is_nidec: config.is_nidec,
-      bu: config.is_nidec ? "NIDEC" : "",
-    });
+    try {
+      await api.post("/defects", payload);
+      alert("Enregistré avec succès");
+      setForm({
+        ...initialForm,
+        form_type: config.form_type,
+        is_nidec: config.is_nidec,
+        bu: config.is_nidec ? "NIDEC" : "",
+      });
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (error) {
+      alert("Erreur lors de l'enregistrement");
+      console.error(error);
+    }
   }
 
   return (
@@ -145,15 +193,15 @@ export default function DefectForm({ config }) {
       )}
 
       <label>
-        BU {isRequired("bu") && "*"}
+        Client {isRequired("bu") && "*"}
         <select
           name="bu"
           value={form.bu}
           onChange={handleChange}
           required={isRequired("bu")}
         >
-          <option value="">Choisir BU</option>
-          {staticOptions.bu.map((x) => (
+          <option value="">Choisir client</option>
+          {clientSelectOptions.map((x) => (
             <option key={x} value={x}>{x}</option>
           ))}
         </select>
@@ -168,7 +216,7 @@ export default function DefectForm({ config }) {
           required={isRequired("ligne")}
         >
           <option value="">Choisir ligne</option>
-          {staticOptions.ligne.map((x) => (
+          {ligneOptions.map((x) => (
             <option key={x} value={x}>{x}</option>
           ))}
         </select>
@@ -207,16 +255,16 @@ export default function DefectForm({ config }) {
       </label>
 
       <label>
-        Equipe {isRequired("equipe") && "*"}
+        Superviseur {isRequired("equipe") && "*"}
         <select
           name="equipe"
           value={form.equipe}
           onChange={handleChange}
           required={isRequired("equipe")}
         >
-          <option value="">Choisir équipe</option>
-          {staticOptions.equipe.map((x) => (
-            <option key={x} value={x}>{x}</option>
+          <option value="">Choisir superviseur</option>
+          {superviseurOptions.map((x) => (
+            <option key={x} value={x}>{normalizeSuperviseurValue(x)}</option>
           ))}
         </select>
       </label>
