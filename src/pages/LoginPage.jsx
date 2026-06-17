@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const redirectTo = location.state?.from?.pathname || "/";
 
@@ -20,27 +22,27 @@ export default function LoginPage() {
 
     try {
       const result = await login(username.trim(), password);
-      console.log('Login response:', result);
-      console.log('force_password_change value:', result.user?.force_password_change);
-      console.log('Type:', typeof result.user?.force_password_change);
-      
+      console.log("Login response:", result);
+      console.log("force_password_change value:", result.user?.force_password_change);
+      console.log("Type:", typeof result.user?.force_password_change);
+
       if (result.success) {
         // Small delay to allow React state to update
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
         if (result.user?.force_password_change) {
-          console.log('Navigating to /change-password');
+          console.log("Navigating to /change-password");
           navigate("/change-password", { replace: true });
           return;
         }
-        console.log('Navigating to dashboard');
+        console.log("Navigating to dashboard");
         navigate(redirectTo, { replace: true });
         return;
       }
 
-      setError(result.message || "Identifiants incorrects");
+      setError(result.message || "Nom d'utilisateur ou mot de passe incorrect.");
     } catch {
-      setError("Identifiants incorrects");
+      setError("Nom d'utilisateur ou mot de passe incorrect.");
     } finally {
       setIsSubmitting(false);
     }
@@ -49,9 +51,13 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-card" aria-labelledby="login-title">
+        <div className="login-logo-wrap">
+          <img className="login-logo" src="/avocarbon-logo.png" alt="Logo de l'entreprise" />
+        </div>
+
         <div className="login-title-block">
-          <p className="login-kicker">Contrôle qualité</p>
-          
+          <p className="login-kicker">Espace qualité</p>
+          <h1 id="login-title">Connectez-vous à votre compte</h1>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -67,20 +73,30 @@ export default function LoginPage() {
 
           <label>
             Mot de passe
-            <input
-              autoComplete="current-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
+            <span className="password-field">
+              <input
+                autoComplete="current-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+              <button
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                className="password-toggle"
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </span>
           </label>
 
-          <button type="submit" disabled={isSubmitting}>
+          <button className="login-submit" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Connexion..." : "Se connecter"}
           </button>
 
-          {error && <p className="login-error">{error}</p>}
+          {error && <p className="login-error">❌ {error}</p>}
         </form>
       </section>
     </main>

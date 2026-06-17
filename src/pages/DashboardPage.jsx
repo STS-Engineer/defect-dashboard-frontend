@@ -130,6 +130,8 @@ export default function DashboardPage() {
   const [quantiteParLigneSemaine, setQuantiteParLigneSemaine] = useState([]);
   const [statusData, setStatusData] = useState([]);
   const [defects, setDefects] = useState([]);
+  const [isSyncingMonday, setIsSyncingMonday] = useState(false);
+  const [syncMondayMessage, setSyncMondayMessage] = useState("");
   const [dailyFilters, setDailyFilters] = useState(INITIAL_CHART_FILTERS);
   const [weeklyFilters, setWeeklyFilters] = useState(INITIAL_CHART_FILTERS);
   const [monthlyFilters, setMonthlyFilters] = useState(INITIAL_CHART_FILTERS);
@@ -222,6 +224,21 @@ export default function DashboardPage() {
     setQuantiteParLigneSemaine(quantiteParLigneSemaineRes.data);
     setStatusData(statusDistributionRes.data);
   }, []);
+
+  const syncMonday = useCallback(async () => {
+    setIsSyncingMonday(true);
+    setSyncMondayMessage("");
+
+    try {
+      await api.post("/sync/monday");
+      await loadData();
+      setSyncMondayMessage("Synchronisation Monday terminée.");
+    } catch {
+      setSyncMondayMessage("Erreur lors de la synchronisation Monday.");
+    } finally {
+      setIsSyncingMonday(false);
+    }
+  }, [loadData]);
 
   const chartOptions = useMemo(() => extractChartOptions(defects), [defects]);
 
@@ -504,6 +521,28 @@ export default function DashboardPage() {
   return (
     <div style={{ width: "100%", maxWidth: "100%", padding: 0, margin: 0 }}>
       <h1>Dashboards Qualité</h1>
+
+      <button 
+        onClick={syncMonday}
+        disabled={isSyncingMonday}
+        style={{
+          padding: "10px 20px",
+          backgroundColor: "#0066CC",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          marginBottom: "20px"
+        }}
+      >
+        {isSyncingMonday ? "Synchronisation..." : "Synchroniser depuis Monday"}
+      </button>
+
+      {syncMondayMessage && (
+        <p style={{ marginTop: -8, marginBottom: 20, fontWeight: 700 }}>
+          {syncMondayMessage}
+        </p>
+      )}
 
       {summary && (
         <div style={{ display: "flex", gap: 16, margin: "20px 0" }}>
