@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, deleteResource } from "../../api";
-import { ChevronDown, FileText, RefreshCw, X } from "lucide-react";
+import { ChevronDown, Download, FileText, RefreshCw, X } from "lucide-react";
+import * as XLSX from "xlsx";
 import SimpleTable from "../../components/SimpleTable";
 import TableFilter from "../../components/TableFilter";
 import DefectForm from "../../components/DefectForm";
@@ -19,6 +20,7 @@ import {
   getTreatmentStatusFilterValue,
   normalizeTreatmentStatus,
 } from "../../utils/treatmentStatusUtils";
+import { matchesFilterValue } from "../../components/filterUtils";
 
 function isRecentDefect(row) {
   const normalizedStatus = normalizeTreatmentStatus(row);
@@ -201,6 +203,70 @@ export default function DetectionDefautsPage() {
     }
   }
 
+  function handleExportExcel() {
+    const exportColumns = [
+      { key: "date_detection", label: "Date" },
+      { key: "semaine", label: "Semaine" },
+      { key: "bu", label: "Client" },
+      { key: "ligne", label: "Ligne" },
+      { key: "poste", label: "Poste" },
+      { key: "equipe", label: "Superviseur" },
+      { key: "defaut", label: "Défaut" },
+      { key: "treatment_status_display", label: "Statut du traitement" },
+      { key: "nombre", label: "Nombre" },
+      { key: "mat_csl1", label: "Mat CSL1" },
+      { key: "prenom_nom_csl1", label: "Nom CSL1" },
+      { key: "mat_cf", label: "Mat CF" },
+      { key: "prenom_nom_cf", label: "Nom CF" },
+      { key: "quantite_controlee", label: "Quantite controlee" },
+    ];
+
+    // Apply the same filter logic as SimpleTable to get the currently displayed rows
+    const filteredRows = recentRows.filter((row) => {
+      return Object.entries(filters).every(([columnKey, filterValue]) => {
+        if (filterValue === "" || filterValue === null || filterValue === undefined) {
+          return true;
+        }
+        const columnDef = columns.find((col) => col.key === columnKey);
+        const cellValue = columnDef?.filterValue
+          ? columnDef.filterValue(row)
+          : row[columnKey];
+        const filterType = columnDef?.filterType || "text";
+        return matchesFilterValue(cellValue, filterValue, filterType, columnKey);
+      });
+    });
+
+    const data = filteredRows.map((row) => {
+      const entry = {};
+      exportColumns.forEach((col) => {
+        let value = row[col.key];
+        if (value === undefined || value === null || value === "") {
+          value = "-";
+        }
+        entry[col.label] = value;
+      });
+      return entry;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Détection Défauts");
+
+    // Auto-size column widths
+    const colWidths = exportColumns.map((col) => {
+      const maxLen = data.reduce((max, row) => {
+        const val = String(row[col.label] || "");
+        return Math.max(max, val.length);
+      }, col.label.length);
+      return { wch: Math.min(maxLen + 2, 40) };
+    });
+    ws["!cols"] = colWidths;
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    XLSX.writeFile(wb, `Detection_Defauts_${dateStr}.xlsx`);
+  }
+
   const handleFormSelect = (formKey) => {
     setSelectedFormKey(formKey);
     setIsFormMenuOpen(false);
@@ -221,6 +287,11 @@ export default function DetectionDefautsPage() {
         </div>
 
         <div className="page-action-group">
+          <button className="secondary" type="button" onClick={handleExportExcel}>
+            <Download size={16} style={{ marginRight: 8 }} />
+            Exporter Excel
+          </button>
+
           <button className="secondary" type="button" onClick={loadRows}>
             <RefreshCw size={16} style={{ marginRight: 8 }} />
             Actualiser

@@ -80,7 +80,22 @@ export default function TraitementCslPage() {
 
   function handleStartTreatment(defect) {
     setSelectedDefect(defect);
-    setFormData(initialForm);
+
+    const returnedStatuses = new Set(["RETOUR_PRODUCTION", "RETOUR_QUALITE"]);
+    if (returnedStatuses.has(defect.status)) {
+      setFormData({
+        securisation: defect.securisation || "",
+        poste_occurrence: defect.poste_occurrence || "",
+        poste_detection: defect.poste_detection || "",
+        root_cause_occurrence: defect.root_cause_occurrence || "",
+        root_cause_non_detection: defect.root_cause_non_detection || "",
+        plan_action_occurrence: defect.plan_action_occurrence || "",
+        plan_action_non_detection: defect.plan_action_non_detection || "",
+      });
+    } else {
+      setFormData(initialForm);
+    }
+
     setError("");
   }
 
@@ -173,7 +188,37 @@ export default function TraitementCslPage() {
                           <td>{defect.defaut || "-"}</td>
                           <td>{normalizeSuperviseurValue(defect.equipe)}</td>
                           <td><StatusBadge status={defect.status} /></td>
-                          <td>{defect.status === 'RETOUR_PRODUCTION' ? defect.prod_validation_comment : defect.status === 'RETOUR_QUALITE' ? defect.quality_validation_comment : ''}</td>
+                          <td>
+                            <div
+                              title={(() => {
+                                const comment = defect.status === 'RETOUR_PRODUCTION'
+                                  ? defect.prod_validation_comment
+                                  : defect.status === 'RETOUR_QUALITE'
+                                    ? defect.quality_validation_comment
+                                    : '';
+                                return comment || '-';
+                              })()}
+                              style={{
+                                maxWidth: "250px",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                cursor: "default",
+                              }}
+                            >
+                              {(() => {
+                                const comment = defect.status === 'RETOUR_PRODUCTION'
+                                  ? defect.prod_validation_comment
+                                  : defect.status === 'RETOUR_QUALITE'
+                                    ? defect.quality_validation_comment
+                                    : '';
+                                const text = comment || '-';
+                                return text.length > 60
+                                  ? text.slice(0, 60) + '...'
+                                  : text;
+                              })()}
+                            </div>
+                          </td>
                           <td>
                             <button type="button" onClick={() => handleStartTreatment(defect)}>
                               Traiter
