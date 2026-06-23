@@ -61,6 +61,7 @@ export default function DetectionDefautsPage() {
 
   const canAddEdit = currentUser?.role === "Data Entry";
   const canDelete = currentUser?.username === "lassaad.charaabi";
+  const canExport = currentUser?.role === "Consultant Qualite" || currentUser?.role === "Responsable Qualite";
   const formKeys = Object.keys(FORM_CONFIGS);
 
   const handleEdit = useCallback((row) => {
@@ -287,10 +288,12 @@ export default function DetectionDefautsPage() {
         </div>
 
         <div className="page-action-group">
-          <button className="secondary" type="button" onClick={handleExportExcel}>
-            <Download size={16} style={{ marginRight: 8 }} />
-            Exporter Excel
-          </button>
+          {canExport && (
+            <button className="secondary" type="button" onClick={handleExportExcel}>
+              <Download size={16} style={{ marginRight: 8 }} />
+              Exporter Excel
+            </button>
+          )}
 
           <button className="secondary" type="button" onClick={loadRows}>
             <RefreshCw size={16} style={{ marginRight: 8 }} />
