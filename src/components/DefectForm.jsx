@@ -22,6 +22,8 @@ const initialForm = {
   prenom_nom_csl1: "",
   mat_cf: "",
   prenom_nom_cf: "",
+  mat_cf_2: "",
+  prenom_nom_cf_2: "",
   quantite_controlee: "",
   saisie_quantite_totale: false,
 };
@@ -130,16 +132,36 @@ export default function DefectForm({ config, onRefresh }) {
       ...prev,
       mat_cf: matricule,
       prenom_nom_cf: selected?.full_name || "",
+      mat_cf_2: prev.mat_cf_2 === matricule ? "" : prev.mat_cf_2,
+      prenom_nom_cf_2: prev.mat_cf_2 === matricule ? "" : prev.prenom_nom_cf_2,
+    }));
+  }
+
+  function handleCF2Change(e) {
+    const matricule = e.target.value;
+    const selected = cf.find((x) => x.value === matricule);
+
+    setForm((prev) => ({
+      ...prev,
+      mat_cf_2: matricule,
+      prenom_nom_cf_2: selected?.full_name || "",
     }));
   }
 
 async function handleSubmit(e) {
     e.preventDefault();
 
+    if (form.mat_cf_2 && form.mat_cf_2 === form.mat_cf) {
+      alert("Mat CF 2 doit etre different de Mat CF");
+      return;
+    }
+
     const payload = {
       ...form,
       monday_group: form.monday_group || null,
       date_detection: form.date_detection || null,
+      mat_cf_2: form.mat_cf_2 || null,
+      prenom_nom_cf_2: form.prenom_nom_cf_2 || null,
       nombre: Number(form.nombre || 0),
       quantite_controlee: form.quantite_controlee
         ? Number(form.quantite_controlee)
@@ -318,7 +340,7 @@ async function handleSubmit(e) {
             >
               <option value="">Select Mat CF</option>
               {cf.map((x) => (
-                <option key={x.value} value={x.value}>{x.label}</option>
+                <option key={x.value} value={x.value} disabled={x.value === form.mat_cf_2}>{x.label}</option>
               ))}
             </select>
           </label>
@@ -329,6 +351,30 @@ async function handleSubmit(e) {
               type="text"
               name="prenom_nom_cf"
               value={form.prenom_nom_cf}
+              readOnly
+            />
+          </label>
+
+          <label>
+            Mat CF 2
+            <select
+              name="mat_cf_2"
+              value={form.mat_cf_2}
+              onChange={handleCF2Change}
+            >
+              <option value="">Select Mat CF 2</option>
+              {cf.map((x) => (
+                <option key={x.value} value={x.value} disabled={x.value === form.mat_cf}>{x.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            PrÃ©nom Nom CF 2
+            <input
+              type="text"
+              name="prenom_nom_cf_2"
+              value={form.prenom_nom_cf_2}
               readOnly
             />
           </label>

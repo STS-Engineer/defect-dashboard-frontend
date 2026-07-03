@@ -35,6 +35,7 @@ export function extractChartOptions(defects) {
 
   defects.forEach((item) => {
     if (item.prenom_nom_cf) operateurSet.add(item.prenom_nom_cf);
+    if (item.prenom_nom_cf_2) operateurSet.add(item.prenom_nom_cf_2);
     if (item.prenom_nom_csl1) operateurSet.add(item.prenom_nom_csl1);
   });
 
@@ -56,7 +57,7 @@ export function filterDefects(defects, filters) {
     }
 
     if (filters.operateur?.length > 0) {
-      const operators = [row.prenom_nom_cf, row.prenom_nom_csl1].filter(Boolean);
+      const operators = [row.prenom_nom_cf, row.prenom_nom_cf_2, row.prenom_nom_csl1].filter(Boolean);
       if (!operators.some((operator) => filters.operateur.includes(operator))) {
         return false;
       }
@@ -181,6 +182,40 @@ export function aggregateByOperator(defects, operatorField, matField = "mat", na
     };
 
     map[operator][bu] = (map[operator][bu] || 0) + 1;
+  });
+
+  return sortByKey(Object.values(map), "operatrice");
+}
+
+export function aggregateByCfOperator(defects) {
+  const map = {};
+
+  defects.forEach((item) => {
+    const bu = item.bu || "Sans client";
+    const inspectors = [
+      {
+        operator: item.prenom_nom_cf || "Sans opÃ©rateur",
+        mat: item.mat_cf || "",
+        name: item.prenom_nom_cf || "Sans opÃ©rateur",
+      },
+      item.mat_cf_2 || item.prenom_nom_cf_2
+        ? {
+            operator: item.prenom_nom_cf_2 || item.mat_cf_2,
+            mat: item.mat_cf_2 || "",
+            name: item.prenom_nom_cf_2 || item.mat_cf_2,
+          }
+        : null,
+    ].filter(Boolean);
+
+    inspectors.forEach(({ operator, mat, name }) => {
+      map[operator] = map[operator] || {
+        operatrice: operator,
+        mat,
+        name,
+      };
+
+      map[operator][bu] = (map[operator][bu] || 0) + 1;
+    });
   });
 
   return sortByKey(Object.values(map), "operatrice");

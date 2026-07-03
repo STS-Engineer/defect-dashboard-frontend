@@ -16,6 +16,7 @@ export default function TablePage() {
   const [defectTypes, setDefectTypes] = useState([]);
   const [quantite, setQuantite] = useState([]);
   const [copieDetection, setCopieDetection] = useState([]);
+  const hasSecondCfInspector = defects.some((row) => row.mat_cf_2 || row.prenom_nom_cf_2);
 
   const loadAll = useCallback(async () => {
     const [defectsRes, cfRes, csl1Res, typesRes, quantiteRes, copieRes] = await Promise.all([
@@ -99,6 +100,10 @@ export default function TablePage() {
           { key: "prenom_nom_csl1", label: "Nom CSL1", filterType: "text" },
           { key: "mat_cf", label: "Mat CF", filterType: "text" },
           { key: "prenom_nom_cf", label: "Nom CF", filterType: "text" },
+          ...(hasSecondCfInspector ? [
+            { key: "mat_cf_2", label: "Mat CF 2", filterType: "text" },
+            { key: "prenom_nom_cf_2", label: "Nom CF 2", filterType: "text" },
+          ] : []),
           { key: "quantite_controlee", label: "Quantité contrôlée", filterType: "number" },
         ]}
         rows={defects}

@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import {
   aggregateByLigne,
+  aggregateByCfOperator,
   aggregateByOperator,
   aggregateByPoste,
   aggregateDailyByLigne,
@@ -301,7 +302,7 @@ export default function DashboardPage() {
   const cfChartData = useMemo(
     () =>
       defects.length
-        ? aggregateByOperator(filteredCfDefects, "prenom_nom_cf", "mat_cf", "prenom_nom_cf")
+        ? aggregateByCfOperator(filteredCfDefects)
         : cf,
     [defects.length, filteredCfDefects, cf]
   );

@@ -93,6 +93,19 @@ export default function EditDefectModal({ defect, onClose, onSuccess }) {
       ...prev,
       mat_cf: matricule,
       prenom_nom_cf: selected?.full_name || "",
+      mat_cf_2: prev.mat_cf_2 === matricule ? "" : prev.mat_cf_2,
+      prenom_nom_cf_2: prev.mat_cf_2 === matricule ? "" : prev.prenom_nom_cf_2,
+    }));
+  }
+
+  function handleCF2Change(e) {
+    const matricule = e.target.value;
+    const selected = cf.find((x) => x.value === matricule);
+
+    setForm((prev) => ({
+      ...prev,
+      mat_cf_2: matricule,
+      prenom_nom_cf_2: selected?.full_name || "",
     }));
   }
 
@@ -100,6 +113,12 @@ export default function EditDefectModal({ defect, onClose, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (form.mat_cf_2 && form.mat_cf_2 === form.mat_cf) {
+      setError("Mat CF 2 doit etre different de Mat CF");
+      setLoading(false);
+      return;
+    }
 
     const payload = {
       date_detection: form.date_detection || null,
@@ -113,6 +132,8 @@ export default function EditDefectModal({ defect, onClose, onSuccess }) {
       prenom_nom_csl1: form.prenom_nom_csl1 || null,
       mat_cf: form.mat_cf || null,
       prenom_nom_cf: form.prenom_nom_cf || null,
+      mat_cf_2: form.mat_cf_2 || null,
+      prenom_nom_cf_2: form.prenom_nom_cf_2 || null,
       quantite_controlee: form.quantite_controlee
         ? Number(form.quantite_controlee)
         : null,
@@ -402,7 +423,7 @@ export default function EditDefectModal({ defect, onClose, onSuccess }) {
             >
               <option value="">Choisir Mat CF</option>
               {cf.map((x) => (
-                <option key={x.value} value={x.value}>
+                <option key={x.value} value={x.value} disabled={x.value === form.mat_cf_2}>
                   {x.label}
                 </option>
               ))}
@@ -415,6 +436,45 @@ export default function EditDefectModal({ defect, onClose, onSuccess }) {
               type="text"
               name="prenom_nom_cf"
               value={form.prenom_nom_cf || ""}
+              readOnly
+              style={{
+                padding: "8px 12px",
+                border: "1px solid #ddd",
+                borderRadius: 6,
+                fontSize: 14,
+                backgroundColor: "#f9f9f9",
+              }}
+            />
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span style={{ fontWeight: 600, fontSize: 14 }}>Mat CF 2</span>
+            <select
+              name="mat_cf_2"
+              value={form.mat_cf_2 || ""}
+              onChange={handleCF2Change}
+              style={{
+                padding: "8px 12px",
+                border: "1px solid #ddd",
+                borderRadius: 6,
+                fontSize: 14,
+              }}
+            >
+              <option value="">Choisir Mat CF 2</option>
+              {cf.map((x) => (
+                <option key={x.value} value={x.value} disabled={x.value === form.mat_cf}>
+                  {x.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span style={{ fontWeight: 600, fontSize: 14 }}>PrÃ©nom Nom CF 2</span>
+            <input
+              type="text"
+              name="prenom_nom_cf_2"
+              value={form.prenom_nom_cf_2 || ""}
               readOnly
               style={{
                 padding: "8px 12px",

@@ -63,6 +63,10 @@ export default function DetectionDefautsPage() {
   const canDelete = currentUser?.username === "lassaad.charaabi";
   const canExport = currentUser?.role === "Consultant Qualite" || currentUser?.role === "Responsable Qualite";
   const formKeys = Object.keys(FORM_CONFIGS);
+  const hasSecondCfInspector = useMemo(
+    () => rows.some((row) => row.mat_cf_2 || row.prenom_nom_cf_2),
+    [rows]
+  );
 
   const handleEdit = useCallback((row) => {
     setEditingDefect(row);
@@ -141,8 +145,22 @@ export default function DetectionDefautsPage() {
       filterType: "text",
       style: { minWidth: "140px", whiteSpace: "nowrap", padding: "12px 16px" }
     },
+    ...(hasSecondCfInspector ? [
+      { 
+        key: "mat_cf_2", 
+        label: "Mat CF 2", 
+        filterType: "text",
+        style: { minWidth: "140px", whiteSpace: "nowrap", padding: "12px 16px" }
+      },
+      { 
+        key: "prenom_nom_cf_2", 
+        label: "Nom CF 2", 
+        filterType: "text",
+        style: { minWidth: "140px", whiteSpace: "nowrap", padding: "12px 16px" }
+      },
+    ] : []),
     { key: "quantite_controlee", label: "Quantite controlee", type: "number", filterType: "number" },
-  ], [statusOptions]);
+  ], [hasSecondCfInspector, statusOptions]);
 
   const { recentRows, historicalRows } = useMemo(() => {
     return rows.reduce(
@@ -219,6 +237,10 @@ export default function DetectionDefautsPage() {
       { key: "prenom_nom_csl1", label: "Nom CSL1" },
       { key: "mat_cf", label: "Mat CF" },
       { key: "prenom_nom_cf", label: "Nom CF" },
+      ...(hasSecondCfInspector ? [
+        { key: "mat_cf_2", label: "Mat CF 2" },
+        { key: "prenom_nom_cf_2", label: "Nom CF 2" },
+      ] : []),
       { key: "quantite_controlee", label: "Quantite controlee" },
     ];
 
