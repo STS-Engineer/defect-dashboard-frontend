@@ -62,6 +62,7 @@ export const lineConfig = {
     client: "VALEO",
     supervisors: [
       "Samia Riahi",
+      "Amal thabet"
     ],
   },
   
