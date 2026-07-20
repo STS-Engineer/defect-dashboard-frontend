@@ -61,7 +61,7 @@ export default function DetectionDefautsPage() {
 
   const canAddEdit = currentUser?.role === "Data Entry";
   const canDelete = currentUser?.username === "lassaad.charaabi";
-  const canExport = currentUser?.role === "Consultant Qualite" || currentUser?.role === "Responsable Qualite";
+  const canExport = ["Consultant Qualite", "Responsable Qualite", "Data Entry"].includes(currentUser?.role);
   const formKeys = Object.keys(FORM_CONFIGS);
   const hasSecondCfInspector = useMemo(
     () => rows.some((row) => row.mat_cf_2 || row.prenom_nom_cf_2),
